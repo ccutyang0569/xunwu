@@ -7,6 +7,7 @@ import com.founder.xunwu.repository.*;
 import com.founder.xunwu.service.IQiniuService;
 import com.founder.xunwu.service.ServiceMultiResult;
 import com.founder.xunwu.service.ServiceResult;
+import com.founder.xunwu.service.search.ISearchService;
 import com.founder.xunwu.web.dto.HouseDTO;
 import com.founder.xunwu.web.dto.HouseDetailDTO;
 import com.founder.xunwu.web.dto.HousePictureDTO;
@@ -61,6 +62,9 @@ public class HouseServiceImpl implements IHouseService {
 
     @Autowired
     private IQiniuService qiniuService;
+
+    @Autowired
+    private ISearchService  searchService;
 
     @Override
     public ServiceResult<HouseDTO> save(HouseForm houseForm) {
@@ -236,6 +240,10 @@ public class HouseServiceImpl implements IHouseService {
         house.setLastUpdateTime(new Date());
         houseRespository.save(house);
 
+        if (house.getStatus() == HouseStatus.PASSES.getValue()) {
+            searchService.index(house.getId());
+        }
+
         return ServiceResult.success();
     }
 
@@ -316,6 +324,12 @@ public class HouseServiceImpl implements IHouseService {
             return new ServiceResult(false, "已经删除的房源不允许操作");
         }
         houseRespository.updateStatus(id,value);
+        // 上架更新索引 其他情况都要删除索引
+        if (value == HouseStatus.PASSES.getValue()) {
+            searchService.index(id);
+        } else {
+            searchService.remove(id);
+        }
         return ServiceResult.success();
     }
 

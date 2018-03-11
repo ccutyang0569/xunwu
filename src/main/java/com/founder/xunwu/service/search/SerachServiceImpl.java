@@ -42,7 +42,7 @@ import java.util.List;
  * @create: 2018-03-03 16:08
  **/
 @Service
-public class SerachServiceImpl implements ISerachService {
+public class SerachServiceImpl implements ISearchService {
 
 
     private static final Logger logger = LoggerFactory.getLogger(SerachServiceImpl.class);

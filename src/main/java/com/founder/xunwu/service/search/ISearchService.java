@@ -6,7 +6,7 @@ package com.founder.xunwu.service.search;
  * @author: yangming
  * @create: 2018-03-03 13:09
  **/
-public interface ISerachService {
+public interface ISearchService {
 
     /**
      * 索引房源目标
