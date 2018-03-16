@@ -9,7 +9,7 @@ package com.founder.xunwu.service.search;
 public class HouseIndexKey {
 
 
-    public static  final String HOUSE_ID="house_id";
+    public static  final String HOUSE_ID="houseId";
 
     public static final String TITLE = "title";
 

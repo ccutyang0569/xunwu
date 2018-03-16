@@ -7,7 +7,7 @@ package com.founder.xunwu.service.search;
  * @create: 2018-03-03 16:48
  **/
 public class HouseIndexMessage {
-    public static final String INDEX = "idnex";
+    public static final String INDEX = "index";
 
     public static final String  REMOVE="remove";
 
