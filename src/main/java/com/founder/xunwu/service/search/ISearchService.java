@@ -1,5 +1,8 @@
 package com.founder.xunwu.service.search;
 
+import com.founder.xunwu.service.ServiceMultiResult;
+import com.founder.xunwu.web.form.RentSearch;
+
 /**
  * @program: xunwu
  * @description:
@@ -20,6 +23,13 @@ public interface ISearchService {
      * @param houseId
      */
     void  remove(Long houseId);
+
+    /**
+     * 查询房源接口
+     * @param rentSearch
+     * @return
+     */
+    ServiceMultiResult<Long> query(RentSearch rentSearch);
 
 
 

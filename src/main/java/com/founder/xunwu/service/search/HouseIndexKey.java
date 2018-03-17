@@ -25,6 +25,8 @@ public class HouseIndexKey {
 
     public static final String REGION_EN_NAME="regionEnName";
 
+    public static final String DIRECTION = "direction";
+
     public static  final String DISTANCE_TO_SUBWAY="distanceToSubway";
 
     public static  final String  STREET="street";
