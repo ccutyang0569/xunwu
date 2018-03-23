@@ -210,7 +210,7 @@ public class SerachServiceImpl implements ISearchService {
                 QueryBuilders.termQuery(HouseIndexKey.CITY_EN_NAME, rentSearch.getCityEnName())
         );
         //区域
-        if (rentSearch.getRegionEnName() != null && !"*".equals(rentSearch.getCityEnName())) {
+        if (rentSearch.getRegionEnName() != null && !"*".equals(rentSearch.getRegionEnName())) {
             boolQuery.filter(
                     QueryBuilders.termQuery(HouseIndexKey.REGION_EN_NAME, rentSearch.getRegionEnName())
 
