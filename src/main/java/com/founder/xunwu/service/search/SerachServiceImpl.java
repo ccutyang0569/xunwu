@@ -14,9 +14,14 @@ import com.founder.xunwu.repository.HouseRespository;
 import com.founder.xunwu.repository.HouseTagRepository;
 import com.founder.xunwu.repository.SupportAddressRepository;
 import com.founder.xunwu.service.ServiceMultiResult;
+import com.founder.xunwu.service.ServiceResult;
 import com.founder.xunwu.service.house.IAddressService;
 import com.founder.xunwu.web.form.RentSearch;
+import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -32,6 +37,11 @@ import org.elasticsearch.index.reindex.DeleteByQueryRequestBuilder;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.suggest.Suggest;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilders;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestionBuilder;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +52,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @program: xunwu
@@ -307,6 +319,91 @@ public class SerachServiceImpl implements ISearchService {
         return new ServiceMultiResult<>(response.getHits().totalHits, houseIds);
     }
 
+    @Override
+    public ServiceResult<String> suggest(String prefix) {
+        CompletionSuggestionBuilder suggestion = SuggestBuilders.completionSuggestion("suggest").prefix(prefix).size(5);
+        SuggestBuilder suggestBuilder = new SuggestBuilder();
+        suggestBuilder.addSuggestion("autocomplete", suggestion);
+
+        SearchRequestBuilder requestBuilder = this.esClient.prepareSearch(INDEX_NAME).
+                setTypes(INDEX_TYPE)
+                .suggest(suggestBuilder);
+
+        logger.debug(requestBuilder.toString());
+        SearchResponse response = requestBuilder.get();
+        Suggest suggest = response.getSuggest();
+        if (suggest == null) {
+            return ServiceResult.of(new ArrayList<>());
+        }
+        Suggest.Suggestion  result = suggest.getSuggestion("autocomplete");
+        int maxSuggest=0;
+
+        Set<String> suggestSet = new HashSet<>();
+        for (Object term :result.getEntries()){
+            if (term instanceof CompletionSuggestion.Entry) {
+                CompletionSuggestion.Entry item = (CompletionSuggestion.Entry) term;
+
+
+
+                if(item.getOptions().isEmpty()){
+                    continue;
+                }
+
+                for (CompletionSuggestion.Entry.Option option : item.getOptions()) {
+                    String tip = option.getText().string();
+                    if (suggestSet.contains(tip)) {
+                        continue;
+                    }
+                    suggestSet.add(tip);
+                    maxSuggest++;
+                }
+            }
+            if (maxSuggest > 5) {
+                break;
+            }
+
+        }
+
+        List<String> suggests = Lists.newArrayList(suggestSet.toArray(new String[]{}));
+        return ServiceResult.of(suggests);
+    }
+
+    private boolean updateSuggest(HouseIndexTemplate indexTemplate){
+        AnalyzeRequestBuilder requestBuilder = new AnalyzeRequestBuilder(
+                this.esClient, AnalyzeAction.INSTANCE, INDEX_NAME, indexTemplate.getTitle(),
+                indexTemplate.getLayoutDesc(), indexTemplate.getRoundService(),
+                indexTemplate.getDescription(), indexTemplate.getSubwayLineName(),
+                indexTemplate.getSubwayLineName()
+        );
+        requestBuilder.setAnalyzer("ik_smart");
+
+        AnalyzeResponse response = requestBuilder.get();
+
+        List<AnalyzeResponse.AnalyzeToken> tokens = response.getTokens();
+        if(tokens==null){
+          logger.warn("Can not analyze token for house:"+indexTemplate.getHouseId());
+          return false;
+        }
+        List<HouseSuggest> suggests = new ArrayList<>();
+        for(AnalyzeResponse.AnalyzeToken token:tokens){
+            //排序数字类型& 小于2个字符的分词结果
+            if ("<NUM>".equals(token.getType()) || token.getTerm().length() < 2) {
+                continue;
+
+            }
+            HouseSuggest suggest=new HouseSuggest();
+            suggest.setInput(token.getTerm());
+            suggests.add(suggest);
+        }
+        //定制小区自动化
+        HouseSuggest suggest=new HouseSuggest();
+
+        suggest.setInput(indexTemplate.getDistrict());
+        suggests.add(suggest);
+        indexTemplate.setSuggest(suggests);
+        return  true;
+
+    }
     private void remove(Long houseId,int retry){
 
         if(retry>HouseIndexMessage.MAX_RETRY){
@@ -327,6 +424,9 @@ public class SerachServiceImpl implements ISearchService {
      * @return
      */
     public boolean create(HouseIndexTemplate houseIndexTemplate) {
+        if (!updateSuggest(houseIndexTemplate)) {
+            return false;
+        }
         try {
             IndexResponse indexResponse = this.esClient.prepareIndex(INDEX_NAME, INDEX_TYPE).setSource(objectMapper.writeValueAsBytes(houseIndexTemplate), XContentType.JSON).get();
             logger.debug("create index with house:"+houseIndexTemplate.getHouseId());
@@ -350,6 +450,9 @@ public class SerachServiceImpl implements ISearchService {
      * @return
      */
     public  boolean update(String esId,HouseIndexTemplate houseIndexTemplate) {
+        if (!updateSuggest(houseIndexTemplate)) {
+            return false;
+        }
 
         try {
             UpdateResponse updateResponse = this.esClient.prepareUpdate(INDEX_NAME, INDEX_TYPE, esId).setDoc(objectMapper.writeValueAsBytes(houseIndexTemplate), XContentType.JSON).get();

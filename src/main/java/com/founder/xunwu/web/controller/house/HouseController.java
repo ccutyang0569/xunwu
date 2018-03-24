@@ -8,6 +8,7 @@ import com.founder.xunwu.service.ServiceMultiResult;
 import com.founder.xunwu.service.ServiceResult;
 import com.founder.xunwu.service.house.IAddressService;
 import com.founder.xunwu.service.house.IHouseService;
+import com.founder.xunwu.service.search.ISearchService;
 import com.founder.xunwu.web.dto.*;
 import com.founder.xunwu.web.form.RentSearch;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,20 @@ public class HouseController {
 
     @Autowired
     private IuserService userService;
+    @Autowired
+    private ISearchService searchService;
+
+
+   @GetMapping("rent/house/autocomplete")
+   @ResponseBody
+   public ApiResponse autocomplete(@RequestParam(value="prefix") String prefix){
+       if(prefix.isEmpty()){
+           return  ApiResponse.ofStatus(ApiResponse.Status.BAD_REQUEST);
+       }
+       ServiceResult<String> result= this.searchService.suggest(prefix);
+       return ApiResponse.ofSuccess(result.getResult());
+
+   }
 
 
     @ResponseBody

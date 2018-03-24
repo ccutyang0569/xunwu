@@ -55,7 +55,7 @@ public class HouseIndexTemplate {
     private int rentWay;
 
     private List<String> tags;
-    private List<HouseSuggest> sugget;
+    private List<HouseSuggest> suggest;
 
     private BaiduMapLocation location;
 
@@ -219,12 +219,12 @@ public class HouseIndexTemplate {
         this.tags = tags;
     }
 
-    public List<HouseSuggest> getSugget() {
-        return sugget;
+    public List<HouseSuggest> getSuggest() {
+        return suggest;
     }
 
-    public void setSugget(List<HouseSuggest> sugget) {
-        this.sugget = sugget;
+    public void setSuggest(List<HouseSuggest> suggest) {
+        this.suggest = suggest;
     }
 
     public BaiduMapLocation getLocation() {

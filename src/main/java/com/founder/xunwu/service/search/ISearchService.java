@@ -1,6 +1,7 @@
 package com.founder.xunwu.service.search;
 
 import com.founder.xunwu.service.ServiceMultiResult;
+import com.founder.xunwu.service.ServiceResult;
 import com.founder.xunwu.web.form.RentSearch;
 
 /**
@@ -31,6 +32,10 @@ public interface ISearchService {
      */
     ServiceMultiResult<Long> query(RentSearch rentSearch);
 
-
-
+    /**
+     * 获取补全关键词
+     * @param prefix
+     * @return
+     */
+    ServiceResult<String> suggest(String prefix);
 }
