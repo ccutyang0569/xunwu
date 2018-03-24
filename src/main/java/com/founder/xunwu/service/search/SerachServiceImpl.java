@@ -265,6 +265,22 @@ public class SerachServiceImpl implements ISearchService {
             );
         }
 
+//        //关键词
+//        boolQuery.must(
+//                QueryBuilders.matchQuery(HouseIndexKey.TITLE, rentSearch.getKeywords())
+//                        .boost(2.0f)
+//        );
+
+        boolQuery.must(
+            QueryBuilders.multiMatchQuery(rentSearch.getKeywords(),
+                    HouseIndexKey.TITLE,
+                    HouseIndexKey.TRAFFIC,
+                    HouseIndexKey.DISTRICT,
+                    HouseIndexKey.ROUND_SERVICE,
+                    HouseIndexKey.SUBWAY_LINE_NAME,
+                    HouseIndexKey.SUBWAY_STATION_NAME)
+        );
+
 
         SearchRequestBuilder searchRequestBuilder = this.esClient.prepareSearch(INDEX_NAME)
                 .setTypes(INDEX_TYPE)
