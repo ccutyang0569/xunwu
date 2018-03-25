@@ -201,11 +201,13 @@ public class HouseController {
         SupportAddressDTO  city = cityAndRegion.get(SupportAddress.Level.CITY);
         model.addAttribute("city", city);
         model.addAttribute("region", region);
+        String district = houseDTO.getDistrict();
         model.addAttribute("house", houseDTO);
         //查询房源的经纪人
         ServiceResult<UserDTO>userDTO  =userService.findByid(houseDTO.getAdminId());
         model.addAttribute("agent",userDTO.getResult());
-        model.addAttribute("houseCountInDistrict", 0);
+        ServiceResult<Long> longServiceResult = searchService.aggregateDistrictHouse(city.getEnName(), region.getEnName(), district);
+        model.addAttribute("houseCountInDistrict", longServiceResult.getResult());
         return "house-detail";
     }
 }

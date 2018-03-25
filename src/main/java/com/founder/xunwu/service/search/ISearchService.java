@@ -38,4 +38,8 @@ public interface ISearchService {
      * @return
      */
     ServiceResult<String> suggest(String prefix);
+
+    ServiceResult<Long> aggregateDistrictHouse(String cityEnName,String regionEnName,String district);
+
+
 }

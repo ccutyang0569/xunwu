@@ -36,6 +36,8 @@ import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.index.reindex.DeleteByQueryRequestBuilder;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.search.suggest.Suggest;
 import org.elasticsearch.search.suggest.SuggestBuilder;
@@ -277,15 +279,14 @@ public class SerachServiceImpl implements ISearchService {
             );
         }
 
-//        //关键词
-//        boolQuery.must(
-//                QueryBuilders.matchQuery(HouseIndexKey.TITLE, rentSearch.getKeywords())
-//                        .boost(2.0f)
-//        );
 
-        boolQuery.must(
+        boolQuery.should(QueryBuilders.matchQuery
+                (HouseIndexKey.TITLE,rentSearch.getKeywords())
+                .boost(2.0f)
+        );
+        boolQuery.should(
             QueryBuilders.multiMatchQuery(rentSearch.getKeywords(),
-                    HouseIndexKey.TITLE,
+
                     HouseIndexKey.TRAFFIC,
                     HouseIndexKey.DISTRICT,
                     HouseIndexKey.ROUND_SERVICE,
@@ -302,6 +303,7 @@ public class SerachServiceImpl implements ISearchService {
                         SortOrder.fromString(rentSearch.getOrderDirection())
                 ).setFrom(rentSearch.getStart())
                 .setSize(rentSearch.getSize())
+                //调优
                 .setFetchSource(HouseIndexKey.HOUSE_ID, null);
          logger.debug(searchRequestBuilder.toString());
 
@@ -366,6 +368,37 @@ public class SerachServiceImpl implements ISearchService {
 
         List<String> suggests = Lists.newArrayList(suggestSet.toArray(new String[]{}));
         return ServiceResult.of(suggests);
+    }
+
+    @Override
+    public ServiceResult<Long> aggregateDistrictHouse(String cityEnName, String regionEnName, String district) {
+
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
+                .filter(QueryBuilders.termQuery(HouseIndexKey.CITY_EN_NAME, cityEnName))
+                .filter(QueryBuilders.termQuery(HouseIndexKey.REGION_EN_NAME, regionEnName))
+                .filter(QueryBuilders.termQuery(HouseIndexKey.DISTRICT, district));
+
+        SearchRequestBuilder requestBuilder = this.esClient.prepareSearch(INDEX_NAME)
+                .setTypes(INDEX_TYPE)
+                .setQuery(boolQuery)
+                .addAggregation(AggregationBuilders.terms(HouseIndexKey.AGG_DISTRICT)
+                        .field(HouseIndexKey.DISTRICT))
+
+                .setSize(0);
+        logger.debug(requestBuilder.toString());
+        SearchResponse response = requestBuilder.get();
+        if (response.status()== RestStatus.OK){
+            Terms terms = response.getAggregations().get(HouseIndexKey.AGG_DISTRICT);
+            if (terms.getBuckets() != null && !terms.getBuckets().isEmpty()) {
+                return ServiceResult.of(terms.getBucketByKey(district).getDocCount());
+            }else{
+
+                logger.warn(" Faild to Aggregate for "+HouseIndexKey.AGG_DISTRICT);
+
+            }
+            return ServiceResult.of(0L);
+        }
+        return null;
     }
 
     private boolean updateSuggest(HouseIndexTemplate indexTemplate){
