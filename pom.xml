@@ -175,20 +175,20 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!--<dependency>
+		<dependency>
 			<groupId>com.aliyun</groupId>
 			<artifactId>aliyun-java-sdk-core</artifactId>
 			<version>3.2.3</version>
-			&lt;!&ndash;<scope>system</scope>&ndash;&gt;
-			&lt;!&ndash;<systemPath>${project.basedir}/lib/aliyun-java-sdk-core-3.2.3.jar</systemPath>&ndash;&gt;
-		</dependency>-->
-		<!--<dependency>
+			<!--<scope>system</scope>-->
+			<!--<systemPath>${project.basedir}/lib/aliyun-java-sdk-core-3.2.3.jar</systemPath>-->
+		</dependency>
+		<dependency>
 			<groupId>com.aliyun</groupId>
 			<artifactId>aliyun-java-sdk-dysmsapi</artifactId>
 			<version>1.0.0</version>
-			&lt;!&ndash;<scope>system</scope>&ndash;&gt;
-			&lt;!&ndash;<systemPath>${project.basedir}/lib/aliyun-java-sdk-dysmsapi-1.0.0.jar</systemPath>&ndash;&gt;
-		</dependency>-->
+			<!--<scope>system</scope>-->
+			<!--<systemPath>${project.basedir}/lib/aliyun-java-sdk-dysmsapi-1.0.0.jar</systemPath>-->
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
