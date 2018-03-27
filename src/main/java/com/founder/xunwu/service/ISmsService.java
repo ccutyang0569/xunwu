@@ -6,7 +6,7 @@ package com.founder.xunwu.service;
  * @author: yangming
  * @create: 2018-03-26 18:09
  **/
-public interface ISmsServcie {
+public interface ISmsService {
 
     /**
      * 向用户手机发送验证码
@@ -20,12 +20,12 @@ public interface ISmsServcie {
      * @param telephone
      * @return
      */
-     ServiceResult<String> getSmsCode(String telephone);
+     String getSmsCode(String telephone);
 
     /**
      *
      * @param telephone
      * @return
      */
-     ServiceResult<String> remove(String telephone);
+    void remove(String telephone);
 }

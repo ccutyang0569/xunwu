@@ -1,12 +1,16 @@
 package com.founder.xunwu.service;
 
+import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.IAcsClient;
 import com.aliyuncs.dysmsapi.model.v20170525.SendSmsRequest;
 import com.aliyuncs.dysmsapi.model.v20170525.SendSmsResponse;
 import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.http.MethodType;
+import com.aliyuncs.profile.DefaultProfile;
+import com.aliyuncs.profile.IClientProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,16 +26,16 @@ import java.util.concurrent.TimeUnit;
  * @create: 2018-03-26 18:16
  **/
 @Service
-public class SmsServiceImpl implements ISmsServcie {
+public class SmsServiceImpl implements ISmsService,InitializingBean {
 
-    @Value("${aliyun.sms.accessKey}")
+    @Value("${aliyun.sms.accsessKey}")
     private String accessKey;
     @Value("${aliyun.sms.accessKeySecret}")
     private String secretKey;
     @Value("${aliyun.sms.template.code}")
     private String templateCode;
-    @Value("${aliyun.sms.signName}")
-    private String signName;
+
+    private final String signName="寻屋";
 
     private static final Logger logger= LoggerFactory.getLogger(SmsServiceImpl.class);
 
@@ -70,7 +74,7 @@ public class SmsServiceImpl implements ISmsServcie {
             if ("OK".equals(response.getCode())){
                success=true;
             } else{
-               logger.error("telephone:"+telephone+" is sending code failed");
+               logger.error("telephone:"+telephone+" is sending code failed :"+ response.getMessage());
             }
         } catch (ClientException e) {
             e.printStackTrace();
@@ -103,12 +107,32 @@ public class SmsServiceImpl implements ISmsServcie {
     }
 
     @Override
-    public ServiceResult<String> getSmsCode(String telephone) {
-        return null;
+    public String getSmsCode(String telephone) {
+
+        return redisTemplate.opsForValue().get(SMS_CODE_CONTENT_PREFIX+telephone);
     }
 
     @Override
-    public ServiceResult<String> remove(String telephone) {
-        return null;
+    public void remove(String telephone) {
+        redisTemplate.delete(SMS_CODE_CONTENT_PREFIX+telephone);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        System.setProperty("sun.net.client.defaultConnectTimeout","10000");
+
+        System.setProperty("sun.net.client.defaultReadTimeOut","10000");
+
+        IClientProfile profile = DefaultProfile.getProfile("cn-hangzhou", accessKey, secretKey);
+
+        String product = "Dysmsapi";
+
+        String domain = "dysmsapi.aliyuncs.com";
+
+        DefaultProfile.addEndpoint("cn-hangzhou","cn-hangzhou",product,domain);
+
+        this.acsClient = new DefaultAcsClient(profile);
+
+
     }
 }
