@@ -51,7 +51,7 @@ public class SmsServiceImpl implements ISmsService,InitializingBean {
     @Override
     public ServiceResult<String> sendSms(String telephone) {
 
-        String gapKey="SMS::CODE::INTERVAL";
+        String gapKey="SMS::CODE::INTERVAL"+telephone;
         String result = redisTemplate.opsForValue().get(gapKey);
         if(result!=null){
             return  new ServiceResult<String>(false,"请求的次数太频繁");

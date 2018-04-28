@@ -33,6 +33,18 @@ public class User  implements UserDetails,Serializable{
     private Date createTime;
     @Column(name="last_update_time")
     private Date lastUpdateTime;
+
+    public Date getLastLoginTime() {
+        return lastLoginTime;
+    }
+
+    public void setLastLoginTime(Date lastLoginTime) {
+        this.lastLoginTime = lastLoginTime;
+    }
+
+    @Column(name = "last_login_time")
+    private Date lastLoginTime;
+
     /**
      * 用户 的头像图片地址
      */

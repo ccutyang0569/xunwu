@@ -9,11 +9,15 @@ import com.founder.xunwu.web.dto.UserDTO;
  * @author: yangming
  * @create: 2018-01-30 20:51
  **/
-public interface IuserService  {
+public interface IUserService  {
 
 
 
    User findUserByName(String userName);
 
     ServiceResult<UserDTO> findByid(Long adminId);
+
+    User findUserByTelephone(String telephone);
+
+    User addUserByPhone(String telephone);
 }

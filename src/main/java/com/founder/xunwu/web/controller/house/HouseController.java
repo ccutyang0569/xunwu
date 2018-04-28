@@ -3,7 +3,7 @@ package com.founder.xunwu.web.controller.house;
 import com.founder.xunwu.base.ApiResponse;
 import com.founder.xunwu.base.RentValueBlock;
 import com.founder.xunwu.entity.SupportAddress;
-import com.founder.xunwu.service.IuserService;
+import com.founder.xunwu.service.IUserService;
 import com.founder.xunwu.service.ServiceMultiResult;
 import com.founder.xunwu.service.ServiceResult;
 import com.founder.xunwu.service.house.IAddressService;
@@ -35,7 +35,7 @@ public class HouseController {
     private IHouseService houseService;
 
     @Autowired
-    private IuserService userService;
+    private IUserService userService;
     @Autowired
     private ISearchService searchService;
 

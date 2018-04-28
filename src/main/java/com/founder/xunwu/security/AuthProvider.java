@@ -1,7 +1,7 @@
 package com.founder.xunwu.security;
 
 import com.founder.xunwu.entity.User;
-import com.founder.xunwu.service.IuserService;
+import com.founder.xunwu.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -19,7 +19,7 @@ import org.springframework.security.core.AuthenticationException;
  **/
 public class AuthProvider implements AuthenticationProvider {
     @Autowired
-    IuserService  userService;
+    IUserService userService;
 
     private Md5PasswordEncoder passwordEncoder=new Md5PasswordEncoder();
     @Override
