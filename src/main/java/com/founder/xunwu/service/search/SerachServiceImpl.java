@@ -322,7 +322,7 @@ public class SerachServiceImpl implements ISearchService {
     }
 
     @Override
-    public ServiceResult<String> suggest(String prefix) {
+    public ServiceResult<List<String>> suggest(String prefix) {
         CompletionSuggestionBuilder suggestion = SuggestBuilders.completionSuggestion("suggest").prefix(prefix).size(5);
         SuggestBuilder suggestBuilder = new SuggestBuilder();
         suggestBuilder.addSuggestion("autocomplete", suggestion);

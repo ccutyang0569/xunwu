@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpSession;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,10 +44,11 @@ public class HouseController {
    @GetMapping("rent/house/autocomplete")
    @ResponseBody
    public ApiResponse autocomplete(@RequestParam(value="prefix") String prefix){
-       if(prefix.isEmpty()){
+        if(prefix.isEmpty()){
            return  ApiResponse.ofStatus(ApiResponse.Status.BAD_REQUEST);
        }
-       ServiceResult<String> result= this.searchService.suggest(prefix);
+       ServiceResult<List<String>> result= this.searchService.suggest(prefix);
+
        return ApiResponse.ofSuccess(result.getResult());
 
    }

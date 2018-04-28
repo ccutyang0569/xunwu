@@ -4,6 +4,8 @@ import com.founder.xunwu.service.ServiceMultiResult;
 import com.founder.xunwu.service.ServiceResult;
 import com.founder.xunwu.web.form.RentSearch;
 
+import java.util.List;
+
 /**
  * @program: xunwu
  * @description:
@@ -37,7 +39,7 @@ public interface ISearchService {
      * @param prefix
      * @return
      */
-    ServiceResult<String> suggest(String prefix);
+    ServiceResult<List<String>> suggest(String prefix);
 
     ServiceResult<Long> aggregateDistrictHouse(String cityEnName,String regionEnName,String district);
 
