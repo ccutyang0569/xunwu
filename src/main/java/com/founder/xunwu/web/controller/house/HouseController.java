@@ -8,6 +8,7 @@ import com.founder.xunwu.service.ServiceMultiResult;
 import com.founder.xunwu.service.ServiceResult;
 import com.founder.xunwu.service.house.IAddressService;
 import com.founder.xunwu.service.house.IHouseService;
+import com.founder.xunwu.service.search.HouseBucketDTO;
 import com.founder.xunwu.service.search.ISearchService;
 import com.founder.xunwu.web.dto.*;
 import com.founder.xunwu.web.form.RentSearch;
@@ -40,6 +41,34 @@ public class HouseController {
     @Autowired
     private ISearchService searchService;
 
+
+
+
+
+
+    @GetMapping("rent/house/map")
+    public String rentMapPage(@RequestParam(value="cityEnName") String cityEnName,
+                              Model model,HttpSession session,
+                              RedirectAttributes redirectAttributes) throws Exception {
+
+        ServiceResult<SupportAddressDTO> city = addressService.findCity(cityEnName);
+        //校验城市是否合法
+        if (!city.isSuccess()){
+            redirectAttributes.addAttribute("msg","must_chose_city");
+            return "redirect:/index";
+        }else {
+            session.setAttribute("cityEnName",cityEnName);
+            model.addAttribute("city", city.getResult());
+        }
+        //全部区域
+        ServiceMultiResult<SupportAddressDTO> regions= addressService.findAllRegionsByCityName(cityEnName);
+        //
+        ServiceMultiResult<HouseBucketDTO> serviceResult=searchService.mapAggregate(cityEnName);
+        model.addAttribute("aggData", serviceResult.getResult());
+        model.addAttribute("total", serviceResult.getTotal());
+        model.addAttribute("regions", regions.getResult());
+        return "rent-map";
+    }
 
    @GetMapping("rent/house/autocomplete")
    @ResponseBody

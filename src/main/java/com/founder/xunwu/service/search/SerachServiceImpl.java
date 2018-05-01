@@ -36,6 +36,8 @@ import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.index.reindex.DeleteByQueryRequestBuilder;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.sort.SortOrder;
@@ -399,6 +401,36 @@ public class SerachServiceImpl implements ISearchService {
             return ServiceResult.of(0L);
         }
         return null;
+    }
+
+    @Override
+    public ServiceMultiResult<HouseBucketDTO> mapAggregate(String cityEnName) {
+        BoolQueryBuilder boolQuery=QueryBuilders.boolQuery();
+        //filter
+        boolQuery.filter(QueryBuilders.termQuery(HouseIndexKey.CITY_EN_NAME, cityEnName));
+        //聚合
+        AggregationBuilder aggBuilder = AggregationBuilders.terms(HouseIndexKey.Agg_REGION).
+                field(HouseIndexKey.REGION_EN_NAME);
+
+        SearchRequestBuilder requestBuilder = this.esClient.prepareSearch(INDEX_NAME).setTypes(INDEX_TYPE).
+                setQuery(boolQuery).addAggregation(aggBuilder);
+
+        logger.debug(requestBuilder.toString());
+        SearchResponse response = requestBuilder.get();
+        List<HouseBucketDTO> buckets = new ArrayList<>();
+        //查询失败
+        if (response.status() != RestStatus.OK) {
+            logger.warn("Aggregate status is not ok for " + requestBuilder);
+            return new ServiceMultiResult<>(0, buckets);
+        }
+       Terms terms= response.getAggregations().get(HouseIndexKey.Agg_REGION);
+
+        terms.getBuckets().forEach(
+                bucket-> buckets.add(new HouseBucketDTO(bucket.getKeyAsString(), bucket.getDocCount()))
+        );
+
+
+        return new ServiceMultiResult<>(response.getHits().getTotalHits(), buckets);
     }
 
     private boolean updateSuggest(HouseIndexTemplate indexTemplate){
