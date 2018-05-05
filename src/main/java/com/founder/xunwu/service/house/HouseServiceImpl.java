@@ -12,10 +12,7 @@ import com.founder.xunwu.service.search.ISearchService;
 import com.founder.xunwu.web.dto.HouseDTO;
 import com.founder.xunwu.web.dto.HouseDetailDTO;
 import com.founder.xunwu.web.dto.HousePictureDTO;
-import com.founder.xunwu.web.form.DatatableSearch;
-import com.founder.xunwu.web.form.HouseForm;
-import com.founder.xunwu.web.form.PhotoForm;
-import com.founder.xunwu.web.form.RentSearch;
+import com.founder.xunwu.web.form.*;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
 import org.modelmapper.ModelMapper;
@@ -355,6 +352,29 @@ public class HouseServiceImpl implements IHouseService {
         }
 
         return simpleQuery(rentSearch);
+    }
+
+    @Override
+    public ServiceMultiResult<HouseDTO> wholeMapQuery(MapSearch mapSearch) {
+        ServiceMultiResult<Long> result=searchService.mapQuery(mapSearch.getCityEnName(),mapSearch.getOrderBy(),mapSearch.getOrderDirection(),
+                mapSearch.getStart(),mapSearch.getSize());
+        if (result.getTotal() ==0) {
+            return new ServiceMultiResult<>(0,new ArrayList<>());
+        }
+        List<HouseDTO> houses = wrapperHouseResult(result.getResult());
+        return new ServiceMultiResult<>(result.getTotal(), houses);
+
+    }
+
+    @Override
+    public ServiceMultiResult<HouseDTO> boundMapQuery(MapSearch mapSearch) {
+        ServiceMultiResult<Long> serviceMultiResult = searchService.mapQuery(mapSearch);
+        if (serviceMultiResult.getTotal() == 0) {
+            return new ServiceMultiResult<>(0, new ArrayList<>());
+        }
+        List<HouseDTO> houses = wrapperHouseResult(serviceMultiResult.getResult());
+        return new ServiceMultiResult<>(serviceMultiResult.getTotal(), houses);
+
     }
 
     private List<HouseDTO> wrapperHouseResult(List<Long> houseIds) {

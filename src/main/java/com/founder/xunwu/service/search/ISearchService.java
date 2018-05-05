@@ -2,6 +2,7 @@ package com.founder.xunwu.service.search;
 
 import com.founder.xunwu.service.ServiceMultiResult;
 import com.founder.xunwu.service.ServiceResult;
+import com.founder.xunwu.web.form.MapSearch;
 import com.founder.xunwu.web.form.RentSearch;
 
 import java.util.List;
@@ -50,4 +51,22 @@ public interface ISearchService {
      * @return
      */
     ServiceMultiResult<HouseBucketDTO> mapAggregate(String cityEnName);
+
+    /**
+     * 城市级别查询
+     * @param cityEnName
+     * @param orderBy
+     * @param orderDirection
+     * @param start
+     * @param size
+     * @return
+     */
+    ServiceMultiResult<Long> mapQuery(String cityEnName, String orderBy, String orderDirection, int start, int size);
+
+    /**
+     *精确范围数据查询
+     * @param mapSearch
+     * @return
+     */
+    ServiceMultiResult<Long> mapQuery(MapSearch mapSearch);
 }

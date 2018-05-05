@@ -5,6 +5,7 @@ import com.founder.xunwu.service.ServiceResult;
 import com.founder.xunwu.web.dto.HouseDTO;
 import com.founder.xunwu.web.form.DatatableSearch;
 import com.founder.xunwu.web.form.HouseForm;
+import com.founder.xunwu.web.form.MapSearch;
 import com.founder.xunwu.web.form.RentSearch;
 
 /**
@@ -38,4 +39,19 @@ public interface IHouseService  {
     ServiceResult updateCover(Long coverId, Long targetId);
 
     ServiceMultiResult<HouseDTO> query(RentSearch rentSearch);
+
+    /**
+     * 全地图查询
+     * @param mapSearch
+     * @return
+     */
+    ServiceMultiResult<HouseDTO> wholeMapQuery(MapSearch mapSearch);
+
+    /**
+     * 精确范围数据查询
+     * @param mapSearch
+     * @return
+     */
+    ServiceMultiResult<HouseDTO>boundMapQuery(MapSearch mapSearch);
+
 }

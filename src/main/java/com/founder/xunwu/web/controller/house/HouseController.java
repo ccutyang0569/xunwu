@@ -11,8 +11,10 @@ import com.founder.xunwu.service.house.IHouseService;
 import com.founder.xunwu.service.search.HouseBucketDTO;
 import com.founder.xunwu.service.search.ISearchService;
 import com.founder.xunwu.web.dto.*;
+import com.founder.xunwu.web.form.MapSearch;
 import com.founder.xunwu.web.form.RentSearch;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +44,37 @@ public class HouseController {
     private ISearchService searchService;
 
 
+    /**
+     * method_name: rentMapHouses
+     * param: [mapSearch]
+     * return: com.founder.xunwu.base.ApiResponse
+     * describe: TODO()
+     * create_user: YangMing
+     * create_date: 2018/5/5 15:30
+     **/
+    @GetMapping("rent/house/map/houses")
+    @ResponseBody
+    public ApiResponse rentMapHouses(@ModelAttribute MapSearch mapSearch) {
+        if (mapSearch.getCityEnName()==null){
+            return ApiResponse.ofMessage(HttpStatus.BAD_REQUEST.value(), "必须选择城市");
+        }
+        ServiceMultiResult<HouseDTO> serviceMultiResult=null;
+        //百度地图缩放级别12
+        if (mapSearch.getLevel()<13){
+            serviceMultiResult=houseService.wholeMapQuery(mapSearch);
 
+        }else{
+            //小地图查询必须传递地图的参数
+            serviceMultiResult=houseService.boundMapQuery(mapSearch);
+        }
+
+        ApiResponse response = ApiResponse.ofSuccess(serviceMultiResult.getResult());
+
+        response.setMore(serviceMultiResult.getTotal()>(mapSearch.getStart() + mapSearch.getSize()));
+
+        return response;
+
+    }
 
 
 

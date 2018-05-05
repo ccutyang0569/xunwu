@@ -16,6 +16,7 @@ import com.founder.xunwu.repository.SupportAddressRepository;
 import com.founder.xunwu.service.ServiceMultiResult;
 import com.founder.xunwu.service.ServiceResult;
 import com.founder.xunwu.service.house.IAddressService;
+import com.founder.xunwu.web.form.MapSearch;
 import com.founder.xunwu.web.form.RentSearch;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
@@ -27,6 +28,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -50,6 +52,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -158,7 +161,14 @@ public class SerachServiceImpl implements ISearchService {
         SupportAddress city = supportAddressRepository.findByEnNameAndLevel(house.getCityEnName(), SupportAddress.Level.CITY.getValue());
 
         SupportAddress region = supportAddressRepository.findByEnNameAndLevel(house.getCityEnName(), SupportAddress.Level.CITY.getValue());
-        // String address = city.getCnName() + region.getCnName() + house.getStreet() + house.getDistrict() + detail.getDetailAddress();
+        String address = city.getCnName() + region.getCnName() + house.getStreet() + house.getDistrict() + detail.getDetailAddress();
+
+        ServiceResult<BaiduMapLocation> location = addressService.getBaiduMapLocation(city.getCnName(),address);
+        if (!location.isSuccess()) {
+            this.index(message.getHouseId(),message.getRetry()+1);
+            return;
+        }
+        indexTemplate.setLocation(location.getResult());
 
         List<HouseTag> tags = houseTagRepository.findAllByHouseId(houseId);
         if (tags != null && !tags.isEmpty()) {
@@ -186,6 +196,17 @@ public class SerachServiceImpl implements ISearchService {
         } else {
             success = deleteAndCreate(totalHit, indexTemplate);
         }
+        //上传百度LBS
+        ServiceResult serviceResult = addressService.lbsUpload(location.getResult(), house.getStreet() + house.getDistrict(),
+                city.getCnName() + region.getCnName() + house.getStreet() + house.getDistrict(),
+                message.getHouseId(), house.getPrice(), house.getArea());
+
+        if (!success || !serviceResult.isSuccess()) {
+            this.index(message.getHouseId(), message.getRetry() + 1);
+        } else {
+            logger.debug("Index success with house " + houseId);
+
+        }
 
 
     }
@@ -200,7 +221,7 @@ public class SerachServiceImpl implements ISearchService {
 
     private void index(Long houseId, int retry) {
         if (retry > HouseIndexMessage.MAX_RETRY) {
-            logger.error("Retry index times over 3 for house" + houseId + "Please check it");
+            logger.error("Retry index times over 3 for house" + houseId + " Please check it");
             return;
         }
         HouseIndexMessage message = new HouseIndexMessage(houseId, HouseIndexMessage.INDEX, retry);
@@ -431,6 +452,70 @@ public class SerachServiceImpl implements ISearchService {
 
 
         return new ServiceMultiResult<>(response.getHits().getTotalHits(), buckets);
+    }
+
+    @Override
+    public ServiceMultiResult<Long> mapQuery(String cityEnName, String orderBy, String orderDirection, int start, int size) {
+        BoolQueryBuilder boolQuery=QueryBuilders.boolQuery();
+        boolQuery.filter(QueryBuilders.termQuery(HouseIndexKey.CITY_EN_NAME,cityEnName));
+        SearchRequestBuilder searchRequestBuilder = this.esClient.prepareSearch(INDEX_NAME).
+                setTypes(INDEX_TYPE).
+                setQuery(boolQuery).
+                addSort(HouseSort.getSortKey(orderBy), SortOrder.fromString(orderDirection)).
+                setFrom(start).
+                setSize(size);
+
+        List<Long> houseIds = new ArrayList<>();
+        SearchResponse response = searchRequestBuilder.get();
+
+        if (response.status() != RestStatus.OK) {
+            logger.warn("Search status is not ok for"+searchRequestBuilder);
+            return new ServiceMultiResult<>(0, houseIds);
+        }
+        for (SearchHit hit : response.getHits()) {
+            houseIds.add(Longs.tryParse(String.valueOf(hit.getSource().get(HouseIndexKey.HOUSE_ID))));
+
+        }
+        return new ServiceMultiResult<>(response.getHits().getTotalHits(), houseIds);
+
+
+
+
+    }
+
+    @Override
+    public ServiceMultiResult<Long> mapQuery(MapSearch mapSearch) {
+        BoolQueryBuilder boolQuery=QueryBuilders.boolQuery();
+        boolQuery.filter(QueryBuilders.termQuery(HouseIndexKey.CITY_EN_NAME, mapSearch.getCityEnName()));
+        boolQuery.filter(
+                QueryBuilders.geoBoundingBoxQuery("location")
+                        .setCorners(
+                                new GeoPoint(mapSearch.getLeftLatitude(), mapSearch.getLeftLatitude()),
+                                new GeoPoint(mapSearch.getRightLatitude(),mapSearch.getRightLongitude())
+                        )
+        );
+        SearchRequestBuilder builder = this.esClient.prepareSearch(INDEX_NAME)
+                .setTypes(INDEX_TYPE)
+                .setQuery(boolQuery)
+                .addSort(HouseSort.getSortKey(mapSearch.getOrderBy()),
+                        SortOrder.fromString(mapSearch.getOrderDirection()))
+                .setFrom(mapSearch.getStart())
+                .setSize(mapSearch.getSize());
+        List<Long> houseIds = new ArrayList<>();
+
+        SearchResponse response = builder.get();
+        if (response.status() != RestStatus.OK) {
+            logger.warn(" Search is not ok for" + builder);
+
+            return new ServiceMultiResult<>(0, houseIds);
+
+        }
+        for (SearchHit hit : response.getHits()) {
+            houseIds.add(Longs.tryParse(String.valueOf(hit.getSource().get(HouseIndexKey.HOUSE_ID))));
+        }
+
+
+        return new ServiceMultiResult<>(response.getHits().getTotalHits(), houseIds);
     }
 
     private boolean updateSuggest(HouseIndexTemplate indexTemplate){
