@@ -139,7 +139,7 @@ function drawRegion(map, regionList) {
 
     if (!customLayer) {
         customLayer = new BMap.CustomLayer({
-            geotableId: 175730,
+            geotableId: 188303,
             q: '', // 检索关键字
             tags: '', // 空格分隔的字符串
             filter: '', // 过滤条件，参考：http://lbsyun.baidu.com/index.php?title=lbscloud/api/geosearch
