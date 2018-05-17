@@ -38,7 +38,6 @@ import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.index.reindex.DeleteByQueryRequestBuilder;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -52,7 +51,6 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -303,11 +301,11 @@ public class SerachServiceImpl implements ISearchService {
         }
 
 
-        boolQuery.should(QueryBuilders.matchQuery
-                (HouseIndexKey.TITLE,rentSearch.getKeywords())
-                .boost(2.0f)
-        );
-        boolQuery.should(
+//        boolQuery.should(QueryBuilders.matchQuery
+//                (HouseIndexKey.TITLE,rentSearch.getKeywords())
+//                .boost(2.0f)
+//        );
+        boolQuery.must(
             QueryBuilders.multiMatchQuery(rentSearch.getKeywords(),
 
                     HouseIndexKey.TRAFFIC,
@@ -573,7 +571,7 @@ public class SerachServiceImpl implements ISearchService {
      * @param houseIndexTemplate
      * @return
      */
-    public boolean create(HouseIndexTemplate houseIndexTemplate) {
+    public boolean  create(HouseIndexTemplate  houseIndexTemplate) {
         if (!updateSuggest(houseIndexTemplate)) {
             return false;
         }
